@@ -1,136 +1,171 @@
-import type { InvoiceWithItems } from '@/types/invoice';
-import { formatDate, formatCurrency } from '@/lib/invoice-helpers';
+'use client';
 
-// Static shop constants — update here if details change
+import type { InvoiceWithItems } from '@/types/invoice';
+import { formatDate } from '@/lib/invoice-helpers';
+
+// ─── Shop constants — edit here to update all invoices ───────────────────────
 const SHOP = {
-  nameEnglish: 'JAGDISH SHARAN & SONS',
+  nameEnglish: 'Jagdish Sharan & Sons',
   nameHindi: 'जगदीश शरण एण्ड सन्स',
-  taglineHindi: 'चश्मे वाले, फल लोक मुहल्ला, धामपुर',
-  gst: '09AASPK5225M1Z6',
+  addressHindi: 'चश्मे वाले, फल चौक, मेन मार्केट, धामपुर -246761',
+  gst: '09ASGPK5025M1ZG',
   leftOpt: {
-    name: 'Anish Mittal',
-    degree: 'D.R. Opt, Lucknow',
-    center: 'Center for Sight',
-    city: 'Dhampur',
+    name: 'Amish Mittal',
+    line1: 'D.R. Opt.,Lucknow',
+    line2: 'Center for Sight Eye Hospital',
+    line3: 'Asin Vivekanand Hospital, Moradabad',
+    line4: 'Consultant Optometrist',
+    mob: '8279813335',
   },
   rightOpt: {
     name: 'Amit Kumar',
-    degree: 'D.R. Opt, Lucknow',
-    regNo: 'Reg. No. OPT/12655',
-    extra: 'F2 & O.A. Gasix',
-    mob: '8270412545',
+    line1: 'D.R. Opt.,Lucknow',
+    line2: 'Reg. No. OPT/12035',
+    line3: 'F.D.O.A.(Delhi),F.C.L.I.(Aligarh)',
+    line4: 'Consultant Optometrist',
+    mob: '9412151444',
   },
 };
 
-interface InvoicePreviewProps {
-  invoice: InvoiceWithItems;
-}
+const s: Record<string, React.CSSProperties> = {
+  // Base container
+  wrap: {
+    background: '#fff',
+    fontFamily: 'Arial, Helvetica, sans-serif',
+    fontSize: '10.5px',
+    lineHeight: '1.45',
+    color: '#111',
+    width: '210mm',
+    minHeight: '297mm',
+    padding: '7mm 8mm 6mm',
+    boxSizing: 'border-box',
+  },
+  // Header
+  headerTable: { width: '100%', borderCollapse: 'collapse' as const },
+  headerDivider: { borderBottom: '2.5px solid #C0392B', marginBottom: '7px', paddingBottom: '6px' },
+  shopNameEn: {
+    color: '#C0392B',
+    fontWeight: 900,
+    fontSize: '22px',
+    letterSpacing: '0.5px',
+    lineHeight: 1.1,
+    fontFamily: 'Arial Black, Arial, sans-serif',
+  },
+  shopNameHi: {
+    color: '#1a56c4',
+    fontWeight: 700,
+    fontSize: '17px',
+    fontFamily: "'Noto Sans Devanagari', Arial, sans-serif",
+    lineHeight: 1.2,
+    margin: '2px 0',
+  },
+  shopAddr: {
+    fontSize: '9.5px',
+    fontFamily: "'Noto Sans Devanagari', Arial, sans-serif",
+    color: '#333',
+    marginTop: '1px',
+  },
+  shopGst: { fontSize: '9px', fontWeight: 700, marginTop: '3px', color: '#222' },
+  optName: { fontWeight: 700, fontSize: '9.5px', color: '#1a56c4' },
+  optLine: { fontSize: '8.5px', color: '#333', lineHeight: '1.5' },
+  // Section labels
+  sectionLabel: {
+    fontWeight: 700,
+    fontSize: '9px',
+    letterSpacing: '0.8px',
+    textTransform: 'uppercase' as const,
+    color: '#444',
+    marginBottom: '3px',
+  },
+};
 
-export function InvoicePreview({ invoice }: InvoicePreviewProps) {
+interface Props { invoice: InvoiceWithItems; }
+
+export function InvoicePreview({ invoice }: Props) {
   const { invoice_items, prescriptions } = invoice;
+  const sortedItems = [...invoice_items].sort((a, b) => a.sl_no - b.sl_no);
+  const grossTotal = Number(invoice.gross_total);
+  const discount = Number(invoice.discount);
+  const netTotal = Number(invoice.net_total);
+  // Pad items to at least 5 rows for clean look
+  const emptyRows = Math.max(0, 5 - sortedItems.length);
 
   return (
-    <div
-      id="invoice-print-area"
-      className="bg-white font-sans"
-      style={{
-        width: '210mm',
-        minHeight: '297mm',
-        padding: '8mm 8mm',
-        fontSize: '11px',
-        lineHeight: '1.4',
-        fontFamily: 'Arial, sans-serif',
-      }}
-    >
-      {/* HEADER */}
-      <div style={{ borderBottom: '3px solid #C0392B', paddingBottom: '6px', marginBottom: '6px' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+    <div id="invoice-print-area" style={s.wrap}>
+
+      {/* ── HEADER ────────────────────────────────────────────────── */}
+      <div style={s.headerDivider}>
+        <table style={s.headerTable}>
           <tbody>
             <tr>
-              {/* Left Optometrist */}
-              <td style={{ width: '30%', verticalAlign: 'top', fontSize: '9px' }}>
-                <div style={{ fontWeight: 700 }}>{SHOP.leftOpt.name}</div>
-                <div>{SHOP.leftOpt.degree}</div>
-                <div>{SHOP.leftOpt.center}</div>
-                <div>{SHOP.leftOpt.city}</div>
+              {/* Left optometrist */}
+              <td style={{ width: '28%', verticalAlign: 'top' }}>
+                <div style={s.optName}>{SHOP.leftOpt.name}</div>
+                <div style={s.optLine}>{SHOP.leftOpt.line1}</div>
+                <div style={s.optLine}>{SHOP.leftOpt.line2}</div>
+                <div style={s.optLine}>{SHOP.leftOpt.line3}</div>
+                <div style={s.optLine}>{SHOP.leftOpt.line4}</div>
+                <div style={s.optLine}>Mob.: {SHOP.leftOpt.mob}</div>
               </td>
 
-              {/* Center — Shop Name */}
-              <td style={{ width: '40%', textAlign: 'center', verticalAlign: 'middle' }}>
-                <div style={{ color: '#C0392B', fontWeight: 900, fontSize: '18px', letterSpacing: '1px' }}>
-                  {SHOP.nameEnglish}
-                </div>
-                <div
-                  style={{
-                    fontWeight: 700,
-                    fontSize: '15px',
-                    fontFamily: "'Noto Sans Devanagari', sans-serif",
-                    margin: '2px 0',
-                  }}
-                >
-                  {SHOP.nameHindi}
-                </div>
-                <div
-                  style={{
-                    fontSize: '9px',
-                    fontFamily: "'Noto Sans Devanagari', sans-serif",
-                    color: '#555',
-                  }}
-                >
-                  {SHOP.taglineHindi}
-                </div>
-                <div style={{ fontSize: '9px', marginTop: '3px', color: '#333' }}>
-                  GST No: {SHOP.gst}
-                </div>
+              {/* Center shop identity */}
+              <td style={{ width: '44%', textAlign: 'center', verticalAlign: 'middle', padding: '0 6px' }}>
+                <div style={s.shopNameEn}>{SHOP.nameEnglish}</div>
+                <div style={s.shopNameHi}>{SHOP.nameHindi}</div>
+                <div style={s.shopAddr}>{SHOP.addressHindi}</div>
+                <div style={s.shopGst}>GST No : {SHOP.gst}</div>
               </td>
 
-              {/* Right Optometrist */}
-              <td style={{ width: '30%', verticalAlign: 'top', textAlign: 'right', fontSize: '9px' }}>
-                <div style={{ fontWeight: 700 }}>{SHOP.rightOpt.name}</div>
-                <div>{SHOP.rightOpt.degree}</div>
-                <div>{SHOP.rightOpt.regNo}</div>
-                <div>{SHOP.rightOpt.extra}</div>
-                <div>Mob: {SHOP.rightOpt.mob}</div>
+              {/* Right optometrist */}
+              <td style={{ width: '28%', verticalAlign: 'top', textAlign: 'right' }}>
+                <div style={s.optName}>{SHOP.rightOpt.name}</div>
+                <div style={s.optLine}>{SHOP.rightOpt.line1}</div>
+                <div style={s.optLine}>{SHOP.rightOpt.line2}</div>
+                <div style={s.optLine}>{SHOP.rightOpt.line3}</div>
+                <div style={s.optLine}>{SHOP.rightOpt.line4}</div>
+                <div style={s.optLine}>Mob.: {SHOP.rightOpt.mob}</div>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      {/* CUSTOMER + INVOICE DETAILS */}
-      <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '6px', border: '1px solid #333' }}>
+      {/* ── CUSTOMER + INVOICE ─────────────────────────────────────── */}
+      <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '8px', border: '1.5px solid #555' }}>
         <tbody>
           <tr>
-            <td style={{ width: '50%', padding: '6px 8px', verticalAlign: 'top', borderRight: '1px solid #333' }}>
-              <div style={{ fontWeight: 700, fontSize: '10px', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Customer Details
+            {/* Customer */}
+            <td style={{ width: '48%', padding: '7px 10px', verticalAlign: 'top', borderRight: '1.5px solid #555' }}>
+              <div style={s.sectionLabel}>Customer Details</div>
+              <div style={{ fontSize: '12px', fontWeight: 700, marginBottom: '2px' }}>
+                {invoice.customer_name}
               </div>
-              <div style={{ fontSize: '13px', fontWeight: 700 }}>{invoice.customer_name}</div>
-              <div style={{ fontSize: '11px', color: '#444', marginTop: '2px' }}>
-                Mob: {invoice.customer_mobile}
+              <div style={{ fontSize: '10px', color: '#444' }}>
+                Mobile Number : {invoice.customer_mobile}
               </div>
             </td>
-            <td style={{ width: '50%', padding: '6px 8px', verticalAlign: 'top' }}>
-              <div style={{ fontWeight: 900, fontSize: '14px', textDecoration: 'underline', textAlign: 'center', marginBottom: '4px' }}>
+            {/* Invoice meta */}
+            <td style={{ width: '52%', padding: '7px 10px', verticalAlign: 'top' }}>
+              <div style={{ fontWeight: 900, fontSize: '16px', textDecoration: 'underline', textAlign: 'center', marginBottom: '5px', letterSpacing: '1px' }}>
                 INVOICE
               </div>
-              <table style={{ width: '100%', fontSize: '10px' }}>
+              <table style={{ width: '100%', fontSize: '10px', borderCollapse: 'collapse' }}>
                 <tbody>
                   <tr>
-                    <td style={{ color: '#555' }}>Invoice No:</td>
-                    <td style={{ fontWeight: 700, textAlign: 'right' }}>#{invoice.invoice_number}</td>
+                    <td style={{ color: '#555', paddingBottom: '1px' }}>Invoice Number :</td>
+                    <td style={{ fontWeight: 700, textAlign: 'right' }}>{invoice.invoice_number}</td>
                   </tr>
                   <tr>
-                    <td style={{ color: '#555' }}>Invoice Date:</td>
+                    <td style={{ color: '#555', paddingBottom: '1px' }}>Invoice Date :</td>
                     <td style={{ textAlign: 'right' }}>{formatDate(invoice.invoice_date)}</td>
                   </tr>
                   <tr>
-                    <td style={{ color: '#555' }}>Date of Order:</td>
+                    <td style={{ color: '#555', paddingBottom: '1px' }}>Date of Order :</td>
                     <td style={{ textAlign: 'right' }}>{formatDate(invoice.order_date)}</td>
                   </tr>
                   {invoice.delivery_date && (
                     <tr>
-                      <td style={{ color: '#555' }}>Date of Delivery:</td>
+                      <td style={{ color: '#555' }}>Date of Delivery :</td>
                       <td style={{ textAlign: 'right' }}>{formatDate(invoice.delivery_date)}</td>
                     </tr>
                   )}
@@ -141,179 +176,228 @@ export function InvoicePreview({ invoice }: InvoicePreviewProps) {
         </tbody>
       </table>
 
-      {/* ITEMS TABLE */}
-      <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '6px' }}>
+      {/* ── ITEMS TABLE ────────────────────────────────────────────── */}
+      <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '0' }}>
         <thead>
-          <tr style={{ backgroundColor: '#333', color: '#fff' }}>
-            <th style={{ padding: '5px 8px', textAlign: 'center', border: '1px solid #333', width: '10%', fontSize: '10px' }}>
+          <tr style={{ backgroundColor: '#222', color: '#fff' }}>
+            <th style={{ padding: '5px 8px', textAlign: 'center', border: '1px solid #444', width: '8%', fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px' }}>
               SL NO
             </th>
-            <th style={{ padding: '5px 8px', textAlign: 'left', border: '1px solid #333', width: '75%', fontSize: '10px' }}>
+            <th style={{ padding: '5px 8px', textAlign: 'left', border: '1px solid #444', fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px' }}>
               PRODUCT DETAILS
             </th>
-            <th style={{ padding: '5px 8px', textAlign: 'right', border: '1px solid #333', width: '15%', fontSize: '10px' }}>
+            <th style={{ padding: '5px 8px', textAlign: 'right', border: '1px solid #444', width: '16%', fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px' }}>
               PRICE
             </th>
           </tr>
         </thead>
         <tbody>
-          {invoice_items
-            .slice()
-            .sort((a, b) => a.sl_no - b.sl_no)
-            .map(item => (
-              <tr key={item.id}>
-                <td style={{ padding: '5px 8px', textAlign: 'center', border: '1px solid #ccc', fontSize: '10px' }}>
-                  {item.sl_no}
-                </td>
-                <td style={{ padding: '5px 8px', border: '1px solid #ccc', fontSize: '10px', whiteSpace: 'pre-line' }}>
-                  {item.product_details}
-                </td>
-                <td style={{ padding: '5px 8px', textAlign: 'right', border: '1px solid #ccc', fontSize: '10px' }}>
-                  Rs {Number(item.price).toFixed(2)}
-                </td>
-              </tr>
-            ))}
-          {/* Empty rows to fill space */}
-          {invoice_items.length < 6 &&
-            Array.from({ length: 6 - invoice_items.length }).map((_, i) => (
-              <tr key={`empty-${i}`}>
-                <td style={{ padding: '5px 8px', border: '1px solid #ccc', height: '24px' }}>&nbsp;</td>
-                <td style={{ padding: '5px 8px', border: '1px solid #ccc' }}>&nbsp;</td>
-                <td style={{ padding: '5px 8px', border: '1px solid #ccc' }}>&nbsp;</td>
-              </tr>
-            ))}
+          {sortedItems.map(item => (
+            <tr key={item.id}>
+              <td style={{ padding: '6px 8px', textAlign: 'center', border: '1px solid #ccc', fontSize: '10px', verticalAlign: 'top' }}>
+                {item.sl_no}
+              </td>
+              <td style={{ padding: '6px 8px', border: '1px solid #ccc', fontSize: '10px', whiteSpace: 'pre-line', verticalAlign: 'top' }}>
+                {item.product_details}
+              </td>
+              <td style={{ padding: '6px 8px', textAlign: 'right', border: '1px solid #ccc', fontSize: '10px', verticalAlign: 'top', fontWeight: 600 }}>
+                Rs {Number(item.price).toFixed(2)}
+              </td>
+            </tr>
+          ))}
+          {Array.from({ length: emptyRows }).map((_, i) => (
+            <tr key={`empty-${i}`}>
+              <td style={{ padding: '6px 8px', border: '1px solid #ccc', height: '26px' }}>&nbsp;</td>
+              <td style={{ padding: '6px 8px', border: '1px solid #ccc' }}>&nbsp;</td>
+              <td style={{ padding: '6px 8px', border: '1px solid #ccc' }}>&nbsp;</td>
+            </tr>
+          ))}
         </tbody>
       </table>
 
-      {/* TOTALS */}
-      <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '4px', border: '2px solid #333' }}>
+      {/* ── TOTALS ─────────────────────────────────────────────────── */}
+      <table style={{ width: '100%', borderCollapse: 'collapse', border: '1.5px solid #555', marginBottom: '0' }}>
         <tbody>
           <tr>
-            <td style={{ padding: '6px 10px', borderRight: '1px solid #333', textAlign: 'center', width: '33%', fontSize: '10px' }}>
-              <div style={{ color: '#555', marginBottom: '2px' }}>Total Paid</div>
-              <div style={{ fontWeight: 700, fontSize: '12px' }}>{formatCurrency(invoice.net_total)}</div>
+            {/* Total paid */}
+            <td style={{ width: '30%', padding: '8px 10px', borderRight: '1px solid #999', verticalAlign: 'middle' }}>
+              <div style={{ fontSize: '10px', color: '#555', marginBottom: '2px' }}>Total Paid</div>
+              <div style={{ fontSize: '13px', fontWeight: 900 }}>: Rs {netTotal.toFixed(2)}</div>
             </td>
-            <td style={{ padding: '6px 10px', borderRight: '1px solid #333', textAlign: 'center', width: '33%', fontSize: '10px' }}>
-              <div style={{ color: '#555', marginBottom: '2px' }}>Total Discount</div>
-              <div style={{ fontWeight: 700, fontSize: '12px' }}>{formatCurrency(invoice.discount)}</div>
+            {/* You save */}
+            <td style={{ width: '38%', padding: '8px 10px', borderRight: '1px solid #999', textAlign: 'center', verticalAlign: 'middle', backgroundColor: '#fafafa' }}>
+              {discount > 0 ? (
+                <>
+                  <div style={{ fontSize: '9px', color: '#666', marginBottom: '3px' }}>
+                    Cart Discount : Rs {discount.toFixed(2)}
+                  </div>
+                  <div style={{ fontSize: '12px', fontWeight: 900, color: '#C0392B' }}>
+                    YOU SAVE : Rs {discount.toFixed(2)}
+                  </div>
+                </>
+              ) : (
+                <div style={{ fontSize: '10px', color: '#aaa' }}>No Discount Applied</div>
+              )}
             </td>
-            <td style={{ padding: '6px 10px', textAlign: 'center', width: '34%', fontSize: '10px' }}>
-              <div style={{ color: '#555', marginBottom: '2px' }}>Gross Total</div>
-              <div style={{ fontWeight: 700, fontSize: '12px' }}>{formatCurrency(invoice.gross_total)}</div>
+            {/* Gross + discount breakdown */}
+            <td style={{ width: '32%', padding: '8px 10px', textAlign: 'right', verticalAlign: 'middle' }}>
+              <div style={{ fontSize: '10px', marginBottom: '2px' }}>
+                <span style={{ color: '#555' }}>Gross Total : </span>
+                <span style={{ fontWeight: 700 }}>Rs {grossTotal.toFixed(2)}</span>
+              </div>
+              <div style={{ fontSize: '10px' }}>
+                <span style={{ color: '#555' }}>Total Discount : </span>
+                <span style={{ fontWeight: 700 }}>Rs {discount.toFixed(2)}</span>
+              </div>
             </td>
           </tr>
         </tbody>
       </table>
 
-      <div style={{ textAlign: 'right', fontWeight: 900, fontSize: '13px', padding: '4px 8px', borderTop: '2px solid #333', marginBottom: '8px' }}>
-        Net Total Amount: {formatCurrency(invoice.net_total)}
+      {/* Net total bar */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'flex-end',
+        alignItems: 'center',
+        gap: '6px',
+        padding: '6px 10px',
+        backgroundColor: '#f5f5f5',
+        border: '1.5px solid #555',
+        borderTop: 'none',
+        marginBottom: '10px',
+      }}>
+        <span style={{ fontSize: '11px', fontWeight: 700, color: '#444' }}>Net Total Amount</span>
+        <span style={{ fontSize: '16px', fontWeight: 900 }}>Rs {netTotal.toFixed(2)}</span>
       </div>
 
-      {/* PRESCRIPTION */}
+      {/* ── PRESCRIPTION ───────────────────────────────────────────── */}
       {invoice.has_prescription && prescriptions && (
-        <div style={{ marginBottom: '8px' }}>
-          <div style={{ fontWeight: 900, textAlign: 'center', textDecoration: 'underline', fontSize: '11px', marginBottom: '4px', letterSpacing: '1px' }}>
+        <div style={{ marginBottom: '10px' }}>
+          <div style={{
+            fontWeight: 900,
+            textAlign: 'center',
+            textDecoration: 'underline',
+            fontSize: '12px',
+            marginBottom: '6px',
+            letterSpacing: '1.5px',
+          }}>
             PRESCRIPTION
           </div>
 
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '9px' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '9.5px' }}>
             <thead>
               <tr>
-                <th style={{ border: '1px solid #333', padding: '3px 4px', width: '8%' }}>&nbsp;</th>
-                <th colSpan={5} style={{ border: '1px solid #333', padding: '3px 4px', textAlign: 'center', backgroundColor: '#f5f5f5' }}>
+                <th style={{ border: '1px solid #555', padding: '4px 6px', width: '7%', background: '#f0f0f0' }}></th>
+                <th colSpan={5} style={{ border: '1px solid #555', padding: '4px', textAlign: 'center', background: '#e8e8e8', fontWeight: 700 }}>
                   RIGHT EYE (OD)
                 </th>
-                <th colSpan={5} style={{ border: '1px solid #333', padding: '3px 4px', textAlign: 'center', backgroundColor: '#f5f5f5' }}>
+                <th colSpan={5} style={{ border: '1px solid #555', padding: '4px', textAlign: 'center', background: '#e8e8e8', fontWeight: 700 }}>
                   LEFT EYE (OS)
                 </th>
               </tr>
-              <tr style={{ backgroundColor: '#eee' }}>
-                <th style={{ border: '1px solid #333', padding: '3px 4px' }}>&nbsp;</th>
-                {['SPH', 'CYL', 'AXIS', 'PD', 'VA'].map(h => (
-                  <th key={`od-${h}`} style={{ border: '1px solid #333', padding: '3px 4px', textAlign: 'center', fontWeight: 700 }}>{h}</th>
+              <tr style={{ background: '#f5f5f5' }}>
+                <th style={{ border: '1px solid #555', padding: '3px 4px' }}></th>
+                {['SPH','CYL','AXIS','PD','VA'].map(h => (
+                  <th key={`od-${h}`} style={{ border: '1px solid #555', padding: '3px 5px', textAlign: 'center', fontWeight: 700, minWidth: '32px' }}>{h}</th>
                 ))}
-                {['SPH', 'CYL', 'AXIS', 'PD', 'VA'].map(h => (
-                  <th key={`os-${h}`} style={{ border: '1px solid #333', padding: '3px 4px', textAlign: 'center', fontWeight: 700 }}>{h}</th>
+                {['SPH','CYL','AXIS','PD','VA'].map(h => (
+                  <th key={`os-${h}`} style={{ border: '1px solid #555', padding: '3px 5px', textAlign: 'center', fontWeight: 700, minWidth: '32px' }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              <PrescriptionRow label="DV" values={[
+              <RxRow label="DV" values={[
                 prescriptions.od_dv_sph, prescriptions.od_dv_cyl, prescriptions.od_dv_axis, prescriptions.od_dv_pd, prescriptions.od_dv_va,
                 prescriptions.os_dv_sph, prescriptions.os_dv_cyl, prescriptions.os_dv_axis, prescriptions.os_dv_pd, prescriptions.os_dv_va,
               ]} />
-              <PrescriptionRow label="NV" values={[
+              <RxRow label="NV" values={[
                 prescriptions.od_nv_sph, prescriptions.od_nv_cyl, prescriptions.od_nv_axis, prescriptions.od_nv_pd, prescriptions.od_nv_va,
                 prescriptions.os_nv_sph, prescriptions.os_nv_cyl, prescriptions.os_nv_axis, prescriptions.os_nv_pd, prescriptions.os_nv_va,
               ]} />
-              <PrescriptionRow label="AOD" values={[
-                prescriptions.od_aod, null, null, null, null,
-                prescriptions.os_aod, null, null, null, null,
+              <RxRow label="ADD" values={[
+                prescriptions.od_aod, '-', '-', '-', '-',
+                prescriptions.os_aod, '-', '-', '-', '-',
               ]} />
-              <PrescriptionRow label="IOD" values={[
-                prescriptions.od_iod, null, null, null, null,
-                prescriptions.os_iod, null, null, null, null,
+              <RxRow label="IPD" values={[
+                prescriptions.od_iod, '-', '-', '-', '-',
+                prescriptions.os_iod, '-', '-', '-', '-',
               ]} />
             </tbody>
           </table>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px', fontSize: '10px' }}>
-            <div>
-              {prescriptions.constant_use ? '☑' : '☐'} Constant Use
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', fontSize: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <span style={{ fontSize: '13px' }}>{prescriptions.constant_use ? '☑' : '☐'}</span>
+              <span style={{ fontWeight: 600 }}>Constant Use</span>
             </div>
-            <div style={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>
+            <div style={{ fontWeight: 900, fontSize: '11px', letterSpacing: '1px', textTransform: 'uppercase' }}>
               Optometrist
             </div>
           </div>
         </div>
       )}
 
-      {/* BRAND LOGOS FOOTER */}
-      <div style={{ borderTop: '2px solid #C0392B', paddingTop: '6px', marginTop: 'auto' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
-          <BrandLogo src="/logos/rayban.png" alt="Ray-Ban" text="Ray-Ban" />
-          <BrandLogo src="/logos/titan.png" alt="TITAN Eyewear" text="TITAN Eyewear" />
-          <BrandLogo src="/logos/crizal.png" alt="Crizal" text="Crizal" />
-          <BrandLogo src="/logos/bausch.png" alt="Bausch+Lomb" text="Bausch+Lomb" />
-          <BrandLogo src="/logos/vogue.png" alt="VOGUE" text="VOGUE" />
+      {/* ── BRAND LOGOS FOOTER ─────────────────────────────────────── */}
+      <div style={{ borderTop: '2px solid #C0392B', paddingTop: '8px', marginTop: '4px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px' }}>
+          <BrandLogo src="/logos/rayban.png" alt="Ray-Ban" text="Ray-Ban" italic />
+          <BrandLogo src="/logos/titan.png" alt="TITAN" text="TITAN EYEWEAR" sub="fastrack" />
+          <BrandLogo src="/logos/crizal.png" alt="Crizal" text="Crizal" sub="IDEE" />
+          <BrandLogo src="/logos/bausch.png" alt="Bausch & Lomb" text="Bausch&Lomb" sub="VOGUE" />
+          <BrandLogo src="/logos/image.png" alt="Image" text="Image" boxed />
           <BrandLogo src="/logos/zeiss.png" alt="ZEISS" text="ZEISS" />
         </div>
-        <div style={{ textAlign: 'center', fontSize: '8px', color: '#999', marginTop: '4px' }}>
-          Dhampur, Uttar Pradesh — Thank you for your business!
-        </div>
       </div>
+
     </div>
   );
 }
 
-function PrescriptionRow({ label, values }: { label: string; values: (string | null | undefined)[] }) {
+// ── Sub-components ──────────────────────────────────────────────────────────
+
+function RxRow({ label, values }: { label: string; values: (string | null | undefined)[] }) {
   return (
     <tr>
-      <td style={{ border: '1px solid #333', padding: '3px 4px', fontWeight: 700, textAlign: 'center', backgroundColor: '#f9f9f9' }}>
+      <td style={{ border: '1px solid #555', padding: '4px 6px', fontWeight: 700, textAlign: 'center', background: '#f9f9f9' }}>
         {label}
       </td>
       {values.map((v, i) => (
-        <td key={i} style={{ border: '1px solid #ccc', padding: '3px 6px', textAlign: 'center', minWidth: '30px' }}>
-          {v || ''}
+        <td key={i} style={{ border: '1px solid #ccc', padding: '4px 6px', textAlign: 'center' }}>
+          {v ?? '-'}
         </td>
       ))}
     </tr>
   );
 }
 
-function BrandLogo({ src, alt, text }: { src: string; alt: string; text: string }) {
+function BrandLogo({
+  src, alt, text, sub, italic, boxed,
+}: {
+  src: string; alt: string; text: string; sub?: string; italic?: boolean; boxed?: boolean;
+}) {
   return (
-    <div style={{ textAlign: 'center', fontSize: '8px', minWidth: '48px' }}>
+    <div style={{ textAlign: 'center', minWidth: '50px', flex: 1 }}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={src}
         alt={alt}
-        style={{ height: '20px', objectFit: 'contain', display: 'block', margin: '0 auto 2px' }}
-        onError={e => {
-          (e.target as HTMLImageElement).style.display = 'none';
-        }}
+        style={{ height: '22px', objectFit: 'contain', display: 'block', margin: '0 auto 2px' }}
+        onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
       />
-      <span style={{ fontWeight: 700, letterSpacing: '0.5px', color: '#333' }}>{text}</span>
+      <div style={{
+        fontSize: '7.5px',
+        fontWeight: 900,
+        letterSpacing: '0.3px',
+        fontStyle: italic ? 'italic' : 'normal',
+        border: boxed ? '1px solid #333' : 'none',
+        padding: boxed ? '1px 3px' : '0',
+        display: 'inline-block',
+      }}>
+        {text}
+      </div>
+      {sub && (
+        <div style={{ fontSize: '7px', color: '#555', fontWeight: 700, marginTop: '1px' }}>{sub}</div>
+      )}
     </div>
   );
 }
