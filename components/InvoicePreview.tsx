@@ -42,9 +42,9 @@ const LOGO_ROW_2 = [
 ];
 const LOGO_H = 44; // px — same for every logo
 
-interface Props { invoice: InvoiceWithItems; }
+interface Props { invoice: InvoiceWithItems; id?: string; }
 
-export function InvoicePreview({ invoice }: Props) {
+export function InvoicePreview({ invoice, id = 'invoice-print-area' }: Props) {
   const { invoice_items, prescriptions } = invoice;
   const sortedItems = [...invoice_items].sort((a, b) => a.sl_no - b.sl_no);
   const grossTotal = Number(invoice.gross_total);
@@ -53,7 +53,7 @@ export function InvoicePreview({ invoice }: Props) {
 
   return (
     <div
-      id="invoice-print-area"
+      id={id}
       style={{
         background: '#fff',
         fontFamily: 'Arial, Helvetica, sans-serif',

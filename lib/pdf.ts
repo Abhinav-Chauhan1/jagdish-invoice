@@ -14,6 +14,13 @@ async function buildPDFBlob(invoiceNumber: number, customerName: string): Promis
     allowTaint: true,
     backgroundColor: '#ffffff',
     logging: false,
+    // Tell html2canvas the exact element size so mobile viewport/DPR doesn't confuse it
+    width: element.offsetWidth,
+    height: element.offsetHeight,
+    windowWidth: element.offsetWidth,
+    windowHeight: element.offsetHeight,
+    scrollX: 0,
+    scrollY: 0,
   } as any);
 
   const imgData = canvas.toDataURL('image/png');

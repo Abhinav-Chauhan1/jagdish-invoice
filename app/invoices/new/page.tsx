@@ -19,7 +19,7 @@ import { StepCustomer } from '@/components/invoice-form/StepCustomer';
 import { StepItems } from '@/components/invoice-form/StepItems';
 import { StepPrescription } from '@/components/invoice-form/StepPrescription';
 import { StepReview } from '@/components/invoice-form/StepReview';
-import { InvoicePreview } from '@/components/InvoicePreview';
+import { HiddenPDFPreview } from '@/components/HiddenPDFPreview';
 import type { InvoiceFormData, InvoiceWithItems } from '@/types/invoice';
 
 const STEP_LABELS = ['Customer', 'Products', 'Prescription', 'Review'];
@@ -175,13 +175,8 @@ export default function NewInvoicePage() {
   if (savedInvoice) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 gap-6">
-        {/*
-          Hidden InvoicePreview so html2canvas can find #invoice-print-area.
-          Positioned off-screen — invisible but in the DOM.
-        */}
-        <div style={{ position: 'fixed', top: '-9999px', left: '-9999px', pointerEvents: 'none' }}>
-          <InvoicePreview invoice={savedInvoice} />
-        </div>
+        {/* Clean hidden preview for PDF capture — no transforms, no off-screen issues */}
+        <HiddenPDFPreview invoice={savedInvoice} />
 
         <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
           <span className="text-4xl">✅</span>

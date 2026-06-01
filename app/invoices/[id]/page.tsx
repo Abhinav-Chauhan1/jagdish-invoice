@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase';
 import { downloadInvoicePDF, shareInvoicePDF } from '@/lib/pdf';
 import { InvoicePreview } from '@/components/InvoicePreview';
 import { InvoiceScaleWrapper } from '@/components/InvoiceScaleWrapper';
+import { HiddenPDFPreview } from '@/components/HiddenPDFPreview';
 import { InvoicePDFButton } from '@/components/InvoicePDFButton';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useToast } from '@/components/ui/Toast';
@@ -113,10 +114,13 @@ export default function InvoiceDetailPage() {
         </div>
       </div>
 
-      {/* Invoice preview — scales to fit any screen width */}
+      {/* Hidden full-size preview for PDF/share capture — no transforms */}
+      <HiddenPDFPreview invoice={invoice} />
+
+      {/* Visible scaled preview for on-screen display — no id, no PDF capture */}
       <div className="py-4 px-3">
         <InvoiceScaleWrapper>
-          <InvoicePreview invoice={invoice} />
+          <InvoicePreview invoice={invoice} id="" />
         </InvoiceScaleWrapper>
       </div>
 
