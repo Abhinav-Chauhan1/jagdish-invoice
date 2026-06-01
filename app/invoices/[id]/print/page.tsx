@@ -2,6 +2,8 @@ import { supabase } from '@/lib/supabase';
 import { InvoicePreview } from '@/components/InvoicePreview';
 import type { InvoiceWithItems } from '@/types/invoice';
 
+export const dynamic = 'force-dynamic';
+
 export default async function PrintPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
