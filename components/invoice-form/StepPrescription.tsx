@@ -18,12 +18,35 @@ const EYE_ROWS = [
 ] as const;
 
 const COLUMNS = ['sph', 'cyl', 'axis', 'pd', 'va'] as const;
+const SIGN_COLS = new Set(['sph', 'cyl']);
+
+function getSign(val: string): '+' | '-' {
+  return val.startsWith('-') ? '-' : '+';
+}
+
+function getAbs(val: string): string {
+  return val.replace(/^[+-]/, '');
+}
 
 export function StepPrescription({ data, onChange, onBack, onNext }: StepPrescriptionProps) {
   const { has_prescription, prescription } = data;
 
   function updatePrescription(field: PrescriptionField, value: string | boolean) {
     onChange({ prescription: { ...prescription, [field]: value } });
+  }
+
+  function toggleSign(field: PrescriptionField) {
+    const current = prescription[field] as string || '';
+    const sign = getSign(current);
+    const abs = getAbs(current);
+    if (!abs) return;
+    updatePrescription(field, sign === '+' ? `-${abs}` : `+${abs}`);
+  }
+
+  function handleSignedInput(field: PrescriptionField, raw: string) {
+    const sign = getSign(prescription[field] as string || '');
+    const clean = raw.replace(/[^0-9.]/g, '');
+    updatePrescription(field, clean ? `${sign}${clean}` : '');
   }
 
   function renderEyeCard(eye: 'od' | 'os', label: string) {
@@ -40,17 +63,44 @@ export function StepPrescription({ data, onChange, onBack, onNext }: StepPrescri
             <div className="grid grid-cols-5 gap-1.5">
               {COLUMNS.map(col => {
                 const field = `${eye}_${row.prefix}_${col}` as PrescriptionField;
+                const isSigned = SIGN_COLS.has(col);
+                const rawVal = prescription[field] as string || '';
+                const sign = getSign(rawVal);
+                const absVal = getAbs(rawVal);
+
                 return (
                   <label key={col} className="flex flex-col gap-1">
                     <span className="text-xs font-semibold text-gray-500 text-center uppercase">{col}</span>
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      value={prescription[field] as string || ''}
-                      onChange={e => updatePrescription(field, e.target.value)}
-                      placeholder="—"
-                      className="h-10 rounded-lg border-2 border-gray-200 text-xs font-medium text-center focus:border-[#C0392B] focus:outline-none"
-                    />
+                    {isSigned ? (
+                      <div className="h-10 flex rounded-lg border-2 border-gray-200 overflow-hidden focus-within:border-[#C0392B]">
+                        <button
+                          type="button"
+                          onPointerDown={e => { e.preventDefault(); toggleSign(field); }}
+                          className={`w-6 flex-shrink-0 flex items-center justify-center text-xs font-bold border-r border-gray-200 transition-colors ${
+                            sign === '-' ? 'bg-[#C0392B] text-white border-[#C0392B]' : 'bg-gray-100 text-gray-500'
+                          }`}
+                        >
+                          {sign}
+                        </button>
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={absVal}
+                          onChange={e => handleSignedInput(field, e.target.value)}
+                          placeholder="0"
+                          className="w-0 flex-1 text-xs font-medium text-center focus:outline-none bg-transparent"
+                        />
+                      </div>
+                    ) : (
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={rawVal}
+                        onChange={e => updatePrescription(field, e.target.value)}
+                        placeholder="—"
+                        className="h-10 rounded-lg border-2 border-gray-200 text-xs font-medium text-center focus:border-[#C0392B] focus:outline-none"
+                      />
+                    )}
                   </label>
                 );
               })}
