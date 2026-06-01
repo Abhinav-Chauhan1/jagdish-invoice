@@ -1,38 +1,65 @@
 'use client';
 
-export async function downloadInvoicePDF(invoiceId: string, invoiceNumber: number, customerName: string) {
+async function buildPDFBlob(invoiceNumber: number, customerName: string): Promise<{ blob: Blob; fileName: string }> {
   const { default: html2canvas } = await import('html2canvas');
   const { jsPDF } = await import('jspdf');
 
   const element = document.getElementById('invoice-print-area');
-  if (!element) {
-    console.error('Invoice print area not found');
-    return;
-  }
+  if (!element) throw new Error('Invoice print area not found');
 
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const canvas = await html2canvas(element, {
-      scale: 2,
-      useCORS: true,
-      allowTaint: true,
-      backgroundColor: '#ffffff',
-      logging: false,
-    } as any);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const canvas = await html2canvas(element, {
+    scale: 2,
+    useCORS: true,
+    allowTaint: true,
+    backgroundColor: '#ffffff',
+    logging: false,
+  } as any);
 
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF('p', 'mm', 'a4');
+  const imgData = canvas.toDataURL('image/png');
+  const pdf = new jsPDF('p', 'mm', 'a4');
+  const pageWidth  = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+  pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, pageHeight);
 
-    // The HTML element is exactly 210×297mm so we fill the entire page 1:1
-    const pageWidth = pdf.internal.pageSize.getWidth();   // 210
-    const pageHeight = pdf.internal.pageSize.getHeight(); // 297
+  const safeName = customerName.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+  const fileName = `Invoice-${invoiceNumber}-${safeName}.pdf`;
+  const blob = pdf.output('blob');
+  return { blob, fileName };
+}
 
-    pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, pageHeight);
+export async function downloadInvoicePDF(_invoiceId: string, invoiceNumber: number, customerName: string) {
+  const { blob, fileName } = await buildPDFBlob(invoiceNumber, customerName);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 
-    const safeName = customerName.replace(/[^a-z0-9]/gi, '-').toLowerCase();
-    pdf.save(`Invoice-${invoiceNumber}-${safeName}.pdf`);
-  } catch (err) {
-    console.error('PDF generation failed:', err);
-    throw err;
+export async function shareInvoicePDF(invoiceNumber: number, customerName: string): Promise<void> {
+  const { blob, fileName } = await buildPDFBlob(invoiceNumber, customerName);
+  const file = new File([blob], fileName, { type: 'application/pdf' });
+
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    await navigator.share({
+      files: [file],
+      title: `Invoice #${invoiceNumber} — Jagdish Sharan & Sons`,
+      text: `Invoice #${invoiceNumber} for ${customerName}`,
+    });
+  } else {
+    // Fallback: download the PDF (user can manually send via WhatsApp)
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    alert('PDF downloaded. Please share it manually via WhatsApp.');
   }
 }

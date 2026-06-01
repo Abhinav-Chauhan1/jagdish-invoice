@@ -109,11 +109,8 @@ export function InvoicePreview({ invoice }: Props) {
         </table>
       </div>
 
-      {/* ── SPACER ── */}
-      <div style={{ flex: 1 }} />
-
       {/* ── CUSTOMER + INVOICE ────────────────────────────────────────── */}
-      <table style={{ width: '100%', borderCollapse: 'collapse', border: '1.5px solid #555' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', border: '1.5px solid #555', marginTop: '10px' }}>
         <tbody>
           <tr>
             <td style={{ width: '48%', padding: '8px 10px', verticalAlign: 'top', borderRight: '1.5px solid #555' }}>
@@ -154,11 +151,8 @@ export function InvoicePreview({ invoice }: Props) {
         </tbody>
       </table>
 
-      {/* ── SPACER ── */}
-      <div style={{ flex: 1 }} />
-
       {/* ── ITEMS TABLE ───────────────────────────────────────────────── */}
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px' }}>
         <thead>
           <tr style={{ backgroundColor: '#222', color: '#fff' }}>
             <th style={{ padding: '6px 8px', textAlign: 'center', border: '1px solid #444', width: '8%', fontSize: '10px', letterSpacing: '0.5px' }}>SL NO</th>
@@ -215,13 +209,10 @@ export function InvoicePreview({ invoice }: Props) {
         <span style={{ fontSize: '17px', fontWeight: 900 }}>Rs {netTotal.toFixed(2)}</span>
       </div>
 
-      {/* ── SPACER ── */}
-      <div style={{ flex: 1 }} />
-
       {/* ── PRESCRIPTION ──────────────────────────────────────────────── */}
       {invoice.has_prescription && prescriptions && (
         <>
-          <div style={{ fontWeight: 900, textAlign: 'center', textDecoration: 'underline', fontSize: '12px', marginBottom: '7px', letterSpacing: '1.5px' }}>
+          <div style={{ fontWeight: 900, textAlign: 'center', textDecoration: 'underline', fontSize: '12px', marginTop: '12px', marginBottom: '7px', letterSpacing: '1.5px' }}>
             PRESCRIPTION
           </div>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '9.5px' }}>
@@ -262,10 +253,11 @@ export function InvoicePreview({ invoice }: Props) {
             <div style={{ fontWeight: 900, fontSize: '11px', letterSpacing: '1px', textTransform: 'uppercase' }}>Optometrist</div>
           </div>
 
-          {/* ── SPACER after prescription ── */}
-          <div style={{ flex: 1 }} />
         </>
       )}
+
+      {/* Single spacer — pushes footer to bottom, absorbs all remaining space */}
+      <div style={{ flex: 1 }} />
 
       {/* ── BRAND LOGOS FOOTER — two rows, all logos same size ────────── */}
       <div style={{ borderTop: '2px solid #C0392B', paddingTop: '10px' }}>

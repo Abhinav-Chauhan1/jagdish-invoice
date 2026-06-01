@@ -5,9 +5,9 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, MessageCircle, Trash2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { shareOnWhatsApp } from '@/lib/invoice-helpers';
-import { downloadInvoicePDF } from '@/lib/pdf';
+import { downloadInvoicePDF, shareInvoicePDF } from '@/lib/pdf';
 import { InvoicePreview } from '@/components/InvoicePreview';
+import { InvoiceScaleWrapper } from '@/components/InvoiceScaleWrapper';
 import { InvoicePDFButton } from '@/components/InvoicePDFButton';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useToast } from '@/components/ui/Toast';
@@ -22,6 +22,7 @@ export default function InvoiceDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [sharing, setSharing] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -38,9 +39,11 @@ export default function InvoiceDetailPage() {
 
         if (err) throw err;
 
+        // Supabase returns prescriptions as a single object (unique FK) or array — handle both
+        const rx = data.prescriptions;
         setInvoice({
           ...data,
-          prescriptions: data.prescriptions?.[0] || null,
+          prescriptions: Array.isArray(rx) ? (rx[0] ?? null) : (rx ?? null),
         });
       } catch (e) {
         console.error(e);
@@ -110,11 +113,11 @@ export default function InvoiceDetailPage() {
         </div>
       </div>
 
-      {/* Invoice preview — scrollable */}
-      <div className="overflow-x-auto py-4 px-2">
-        <div className="shadow-xl rounded-lg overflow-hidden">
+      {/* Invoice preview — scales to fit any screen width */}
+      <div className="py-4 px-3">
+        <InvoiceScaleWrapper>
           <InvoicePreview invoice={invoice} />
-        </div>
+        </InvoiceScaleWrapper>
       </div>
 
       {/* Action bar */}
@@ -127,18 +130,21 @@ export default function InvoiceDetailPage() {
             className="flex-1 h-12 rounded-xl bg-[#C0392B] text-white font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60"
           />
           <button
-            onClick={() =>
-              shareOnWhatsApp(
-                invoice.invoice_number,
-                invoice.customer_name,
-                invoice.net_total,
-                invoice.invoice_date
-              )
-            }
-            className="flex-1 h-12 rounded-xl bg-green-500 text-white font-bold text-sm flex items-center justify-center gap-2"
+            onClick={async () => {
+              setSharing(true);
+              try {
+                await shareInvoicePDF(invoice.invoice_number, invoice.customer_name);
+              } catch {
+                showToast('Could not share. Try downloading instead.', 'error');
+              } finally {
+                setSharing(false);
+              }
+            }}
+            disabled={sharing}
+            className="flex-1 h-12 rounded-xl bg-green-500 text-white font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60"
           >
             <MessageCircle size={18} />
-            WhatsApp
+            {sharing ? 'Preparing...' : 'WhatsApp'}
           </button>
         </div>
       </div>

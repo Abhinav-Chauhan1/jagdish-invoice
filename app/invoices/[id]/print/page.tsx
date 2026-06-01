@@ -25,9 +25,10 @@ export default async function PrintPage({ params }: { params: Promise<{ id: stri
     );
   }
 
+  const rx = data.prescriptions;
   const invoice: InvoiceWithItems = {
     ...data,
-    prescriptions: data.prescriptions?.[0] || null,
+    prescriptions: Array.isArray(rx) ? (rx[0] ?? null) : (rx ?? null),
   };
 
   return (

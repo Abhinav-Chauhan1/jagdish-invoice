@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, MessageCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -13,15 +12,15 @@ import {
   saveDraft,
   loadDraft,
   clearDraft,
-  shareOnWhatsApp,
 } from '@/lib/invoice-helpers';
-import { downloadInvoicePDF } from '@/lib/pdf';
+import { downloadInvoicePDF, shareInvoicePDF } from '@/lib/pdf';
 import { useToast } from '@/components/ui/Toast';
 import { StepCustomer } from '@/components/invoice-form/StepCustomer';
 import { StepItems } from '@/components/invoice-form/StepItems';
 import { StepPrescription } from '@/components/invoice-form/StepPrescription';
 import { StepReview } from '@/components/invoice-form/StepReview';
-import type { InvoiceFormData } from '@/types/invoice';
+import { InvoicePreview } from '@/components/InvoicePreview';
+import type { InvoiceFormData, InvoiceWithItems } from '@/types/invoice';
 
 const STEP_LABELS = ['Customer', 'Products', 'Prescription', 'Review'];
 
@@ -52,24 +51,15 @@ function defaultFormData(): InvoiceFormData {
   };
 }
 
-type SavedInvoice = {
-  id: string;
-  invoice_number: number;
-  customer_name: string;
-  net_total: number;
-  invoice_date: string;
-};
-
 export default function NewInvoicePage() {
-  const router = useRouter();
   const { showToast } = useToast();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<InvoiceFormData>(defaultFormData);
   const [saving, setSaving] = useState(false);
-  const [savedInvoice, setSavedInvoice] = useState<SavedInvoice | null>(null);
+  const [savedInvoice, setSavedInvoice] = useState<InvoiceWithItems | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [sharing, setSharing] = useState(false);
 
-  // Load invoice number + draft on mount
   useEffect(() => {
     async function init() {
       const nextNum = await getNextInvoiceNumber();
@@ -83,10 +73,7 @@ export default function NewInvoicePage() {
     init();
   }, []);
 
-  // Auto-save draft
-  useEffect(() => {
-    saveDraft(form);
-  }, [form]);
+  useEffect(() => { saveDraft(form); }, [form]);
 
   function updateForm(updates: Partial<InvoiceFormData>) {
     setForm(prev => ({ ...prev, ...updates }));
@@ -97,7 +84,6 @@ export default function NewInvoicePage() {
     try {
       const { grossTotal, netTotal } = calculateTotals(form.items, form.discount);
 
-      // Insert invoice
       const { data: invoice, error: invError } = await supabase
         .from('invoices')
         .insert({
@@ -117,44 +103,53 @@ export default function NewInvoicePage() {
 
       if (invError) throw invError;
 
-      // Insert items
       const itemsToInsert = form.items
         .filter(item => item.product_details.trim())
-        .map(item => ({
+        .map((item, idx) => ({
           invoice_id: invoice.id,
-          sl_no: item.sl_no,
+          sl_no: idx + 1,
           product_details: item.product_details.trim(),
           price: parseFloat(item.price) || 0,
         }));
 
       if (itemsToInsert.length > 0) {
-        const { error: itemsError } = await supabase
-          .from('invoice_items')
-          .insert(itemsToInsert);
+        const { error: itemsError } = await supabase.from('invoice_items').insert(itemsToInsert);
         if (itemsError) throw itemsError;
       }
 
-      // Insert prescription
+      let rxRecord = null;
       if (form.has_prescription) {
-        const { error: rxError } = await supabase
+        const rxPayload = {
+          invoice_id: invoice.id,
+          ...Object.fromEntries(
+            Object.entries(form.prescription).map(([k, v]) => [k, v === '' ? null : v])
+          ),
+        };
+        const { data: rxData, error: rxError } = await supabase
           .from('prescriptions')
-          .insert({
-            invoice_id: invoice.id,
-            ...Object.fromEntries(
-              Object.entries(form.prescription).map(([k, v]) => [k, v === '' ? null : v])
-            ),
-          });
+          .insert(rxPayload)
+          .select()
+          .single();
         if (rxError) throw rxError;
+        rxRecord = rxData;
       }
 
       clearDraft();
-      setSavedInvoice({
-        id: invoice.id,
-        invoice_number: invoice.invoice_number,
-        customer_name: invoice.customer_name,
-        net_total: netTotal,
-        invoice_date: invoice.invoice_date,
-      });
+
+      // Build full InvoiceWithItems so InvoicePreview can render for PDF
+      const full: InvoiceWithItems = {
+        ...invoice,
+        invoice_items: itemsToInsert.map((it, i) => ({
+          id: `local-${i}`,
+          invoice_id: invoice.id,
+          sl_no: it.sl_no,
+          product_details: it.product_details,
+          price: it.price,
+        })),
+        prescriptions: rxRecord,
+      };
+
+      setSavedInvoice(full);
       showToast('Invoice saved successfully!', 'success');
     } catch (e) {
       console.error(e);
@@ -176,10 +171,18 @@ export default function NewInvoicePage() {
     }
   }
 
-  // Success screen
+  // ── Success screen ──────────────────────────────────────────────────────────
   if (savedInvoice) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 gap-6">
+        {/*
+          Hidden InvoicePreview so html2canvas can find #invoice-print-area.
+          Positioned off-screen — invisible but in the DOM.
+        */}
+        <div style={{ position: 'fixed', top: '-9999px', left: '-9999px', pointerEvents: 'none' }}>
+          <InvoicePreview invoice={savedInvoice} />
+        </div>
+
         <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
           <span className="text-4xl">✅</span>
         </div>
@@ -189,7 +192,7 @@ export default function NewInvoicePage() {
             Invoice #{savedInvoice.invoice_number} for {savedInvoice.customer_name}
           </p>
           <p className="text-[#C0392B] font-bold text-lg mt-1">
-            Rs {savedInvoice.net_total.toFixed(2)}
+            Rs {Number(savedInvoice.net_total).toFixed(2)}
           </p>
         </div>
 
@@ -203,18 +206,21 @@ export default function NewInvoicePage() {
           </button>
 
           <button
-            onClick={() =>
-              shareOnWhatsApp(
-                savedInvoice.invoice_number,
-                savedInvoice.customer_name,
-                savedInvoice.net_total,
-                savedInvoice.invoice_date
-              )
-            }
-            className="h-14 rounded-2xl bg-green-500 text-white font-bold text-base flex items-center justify-center gap-2"
+            onClick={async () => {
+              setSharing(true);
+              try {
+                await shareInvoicePDF(savedInvoice.invoice_number, savedInvoice.customer_name);
+              } catch {
+                showToast('Could not share. Try downloading instead.', 'error');
+              } finally {
+                setSharing(false);
+              }
+            }}
+            disabled={sharing}
+            className="h-14 rounded-2xl bg-green-500 text-white font-bold text-base flex items-center justify-center gap-2 disabled:opacity-60"
           >
             <MessageCircle size={20} />
-            Share via WhatsApp
+            {sharing ? 'Preparing PDF...' : 'Share via WhatsApp'}
           </button>
 
           <Link
@@ -226,11 +232,7 @@ export default function NewInvoicePage() {
 
           <div className="grid grid-cols-2 gap-3">
             <button
-              onClick={() => {
-                setSavedInvoice(null);
-                setForm(defaultFormData());
-                setStep(0);
-              }}
+              onClick={() => { setSavedInvoice(null); setForm(defaultFormData()); setStep(0); }}
               className="h-12 rounded-2xl bg-gray-900 text-white font-semibold text-sm"
             >
               New Invoice
@@ -247,9 +249,9 @@ export default function NewInvoicePage() {
     );
   }
 
+  // ── Wizard ──────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-white">
-      {/* Nav + Progress */}
       <div className="bg-white border-b border-gray-100 px-4 pt-10 pb-4 sticky top-0 z-10">
         <div className="flex items-center gap-3 mb-4">
           <Link href="/" className="h-10 w-10 flex items-center justify-center rounded-xl bg-gray-100">
@@ -258,57 +260,21 @@ export default function NewInvoicePage() {
           <h1 className="text-base font-black text-gray-900 flex-1">New Invoice</h1>
           <span className="text-xs text-gray-400 font-medium">Step {step + 1} of {STEP_LABELS.length}</span>
         </div>
-
-        {/* Progress bar */}
         <div className="flex gap-1.5">
           {STEP_LABELS.map((label, i) => (
             <div key={i} className="flex-1 flex flex-col gap-1">
-              <div
-                className={`h-1.5 rounded-full transition-colors ${
-                  i <= step ? 'bg-[#C0392B]' : 'bg-gray-200'
-                }`}
-              />
-              <span className={`text-xs text-center font-medium ${i === step ? 'text-[#C0392B]' : 'text-gray-400'}`}>
-                {label}
-              </span>
+              <div className={`h-1.5 rounded-full transition-colors ${i <= step ? 'bg-[#C0392B]' : 'bg-gray-200'}`} />
+              <span className={`text-xs text-center font-medium ${i === step ? 'text-[#C0392B]' : 'text-gray-400'}`}>{label}</span>
             </div>
           ))}
         </div>
       </div>
 
       <div className="px-4 py-5 max-w-lg mx-auto">
-        {step === 0 && (
-          <StepCustomer
-            data={form}
-            onChange={updateForm}
-            onNext={() => setStep(1)}
-          />
-        )}
-        {step === 1 && (
-          <StepItems
-            data={form}
-            onChange={updateForm}
-            onNext={() => setStep(2)}
-            onBack={() => setStep(0)}
-          />
-        )}
-        {step === 2 && (
-          <StepPrescription
-            data={form}
-            onChange={updateForm}
-            onNext={() => setStep(3)}
-            onBack={() => setStep(1)}
-          />
-        )}
-        {step === 3 && (
-          <StepReview
-            data={form}
-            onBack={() => setStep(2)}
-            onGoToStep={setStep}
-            onSave={handleSave}
-            saving={saving}
-          />
-        )}
+        {step === 0 && <StepCustomer data={form} onChange={updateForm} onNext={() => setStep(1)} />}
+        {step === 1 && <StepItems data={form} onChange={updateForm} onNext={() => setStep(2)} onBack={() => setStep(0)} />}
+        {step === 2 && <StepPrescription data={form} onChange={updateForm} onNext={() => setStep(3)} onBack={() => setStep(1)} />}
+        {step === 3 && <StepReview data={form} onBack={() => setStep(2)} onGoToStep={setStep} onSave={handleSave} saving={saving} />}
       </div>
     </div>
   );
