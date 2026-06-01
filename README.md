@@ -1,36 +1,78 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Jagdish Sharan & Sons — Invoice Manager
 
-## Getting Started
+A mobile-first invoice management web app for Jagdish Sharan & Sons optical shop, Dhampur, UP.
 
-First, run the development server:
+## Tech Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Next.js 16** (App Router, TypeScript)
+- **Supabase** (Postgres database)
+- **Tailwind CSS v4**
+- **html2canvas + jsPDF** (PDF generation)
+- **Lucide React** (Icons)
+
+## Setup Instructions
+
+### 1. Create Supabase Project
+
+1. Go to [supabase.com](https://supabase.com) and create a new project
+2. Run the SQL schema in `supabase/schema.sql` in the SQL Editor
+3. Copy your **Project URL** and **anon key** from Settings → API
+
+### 2. Configure Environment Variables
+
+Create a `.env.local` file in the project root:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 3. Install & Run
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm install
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Learn More
+## Features
 
-To learn more about Next.js, take a look at the following resources:
+- **Dashboard** — quick stats (total invoices, monthly revenue) + recent invoices
+- **4-step invoice wizard** — customer details → products → prescription → review
+- **Auto invoice numbering** — sequential, never repeats
+- **PDF download** — generates A4 PDF from the invoice preview
+- **WhatsApp share** — pre-filled message with invoice details
+- **Prescription support** — full optometry prescription table (OD/OS, DV/NV)
+- **Draft auto-save** — form data saved to localStorage so nothing is lost
+- **Search & filter** — search by name, mobile, or invoice number; filter by week/month
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## App Pages
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| URL | Description |
+|-----|-------------|
+| `/` | Dashboard |
+| `/invoices` | Invoice list with search |
+| `/invoices/new` | Create new invoice (4 steps) |
+| `/invoices/[id]` | View single invoice + download PDF |
+| `/invoices/[id]/print` | Print-friendly layout |
 
-## Deploy on Vercel
+## Brand Logos
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Drop logo image files into `/public/logos/` with these exact names:
+- `rayban.png`
+- `titan.png`
+- `crizal.png`
+- `bausch.png`
+- `vogue.png`
+- `zeiss.png`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The invoice footer will display them. If files are missing, logo images are silently hidden and only text shows.
+
+## Customization
+
+All shop details (names, address, GST number, optometrist names) are hardcoded in:
+```
+components/InvoicePreview.tsx
+```
+Look for the `SHOP` constant at the top of the file.

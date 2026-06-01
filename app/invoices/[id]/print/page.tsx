@@ -1,0 +1,40 @@
+import { supabase } from '@/lib/supabase';
+import { InvoicePreview } from '@/components/InvoicePreview';
+import type { InvoiceWithItems } from '@/types/invoice';
+
+export default async function PrintPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+
+  const { data, error } = await supabase
+    .from('invoices')
+    .select(`
+      *,
+      invoice_items (*),
+      prescriptions (*)
+    `)
+    .eq('id', id)
+    .single();
+
+  if (error || !data) {
+    return (
+      <div style={{ padding: '20px', fontFamily: 'Arial' }}>
+        <p>Invoice not found.</p>
+      </div>
+    );
+  }
+
+  const invoice: InvoiceWithItems = {
+    ...data,
+    prescriptions: data.prescriptions?.[0] || null,
+  };
+
+  return (
+    <div style={{ margin: 0, padding: 0, background: 'white' }}>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;700;900&display=swap"
+        rel="stylesheet"
+      />
+      <InvoicePreview invoice={invoice} />
+    </div>
+  );
+}
