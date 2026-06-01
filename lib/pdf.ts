@@ -23,23 +23,11 @@ export async function downloadInvoicePDF(invoiceId: string, invoiceNumber: numbe
     const imgData = canvas.toDataURL('image/png');
     const pdf = new jsPDF('p', 'mm', 'a4');
 
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    const imgWidth = pageWidth;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    // The HTML element is exactly 210×297mm so we fill the entire page 1:1
+    const pageWidth = pdf.internal.pageSize.getWidth();   // 210
+    const pageHeight = pdf.internal.pageSize.getHeight(); // 297
 
-    let heightLeft = imgHeight;
-    let position = 0;
-
-    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight;
-
-    while (heightLeft > 0) {
-      position = heightLeft - imgHeight;
-      pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-    }
+    pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, pageHeight);
 
     const safeName = customerName.replace(/[^a-z0-9]/gi, '-').toLowerCase();
     pdf.save(`Invoice-${invoiceNumber}-${safeName}.pdf`);
