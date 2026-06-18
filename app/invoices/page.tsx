@@ -37,16 +37,16 @@ export default function InvoiceListPage() {
         query = query.gte('created_at', monthStart);
       }
 
-      // Search by name, mobile, or invoice number
+      // Search by company name, customer name, mobile, or invoice number
       if (searchTerm.trim()) {
         const num = parseInt(searchTerm, 10);
         if (!isNaN(num)) {
           query = query.or(
-            `customer_name.ilike.%${searchTerm}%,customer_mobile.ilike.%${searchTerm}%,invoice_number.eq.${num}`
+            `company_name.ilike.%${searchTerm}%,customer_name.ilike.%${searchTerm}%,customer_mobile.ilike.%${searchTerm}%,invoice_number.eq.${num}`
           );
         } else {
           query = query.or(
-            `customer_name.ilike.%${searchTerm}%,customer_mobile.ilike.%${searchTerm}%`
+            `company_name.ilike.%${searchTerm}%,customer_name.ilike.%${searchTerm}%,customer_mobile.ilike.%${searchTerm}%`
           );
         }
       }
@@ -95,7 +95,7 @@ export default function InvoiceListPage() {
             type="search"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search by name or mobile..."
+            placeholder="Search by company, name or mobile..."
             className="w-full h-11 pl-11 pr-4 rounded-xl border-2 border-gray-200 text-sm font-medium focus:border-[#C0392B] focus:outline-none bg-gray-50"
           />
         </div>
@@ -143,6 +143,9 @@ export default function InvoiceListPage() {
                   <span className="text-xs font-black text-[#C0392B] text-center">#{inv.invoice_number}</span>
                 </div>
                 <div className="flex-1 min-w-0">
+                  {inv.company_name && (
+                    <div className="text-xs font-semibold text-blue-600 truncate">{inv.company_name}</div>
+                  )}
                   <div className="text-sm font-bold text-gray-900 truncate">{inv.customer_name}</div>
                   <div className="text-xs text-gray-500">{inv.customer_mobile}</div>
                   <div className="text-xs text-gray-400 mt-0.5">{formatDate(inv.invoice_date)}</div>

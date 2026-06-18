@@ -1,6 +1,7 @@
 export interface Invoice {
   id: string;
   invoice_number: number;
+  company_name?: string;
   customer_name: string;
   customer_mobile: string;
   invoice_date: string;
@@ -59,6 +60,7 @@ export interface InvoiceWithItems extends Invoice {
 }
 
 export interface InvoiceFormData {
+  company_name: string;
   customer_name: string;
   customer_mobile: string;
   invoice_date: string;

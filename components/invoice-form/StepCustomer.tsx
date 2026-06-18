@@ -24,6 +24,17 @@ export function StepCustomer({ data, onChange, onNext }: StepCustomerProps) {
 
       <div className="flex flex-col gap-4">
         <label className="flex flex-col gap-1.5">
+          <span className="text-base font-semibold text-gray-800">Company Name</span>
+          <input
+            type="text"
+            value={data.company_name}
+            onChange={e => onChange({ company_name: e.target.value })}
+            placeholder="Enter company name (optional)"
+            className="h-12 px-4 rounded-xl border-2 border-gray-200 text-base font-medium focus:border-[#C0392B] focus:outline-none transition-colors"
+          />
+        </label>
+
+        <label className="flex flex-col gap-1.5">
           <span className="text-base font-semibold text-gray-800">Customer Name *</span>
           <input
             type="text"

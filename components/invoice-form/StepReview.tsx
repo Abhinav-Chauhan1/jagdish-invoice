@@ -28,6 +28,12 @@ export function StepReview({ data, onBack, onGoToStep, onSave, saving }: StepRev
           </button>
         </div>
         <div className="p-4 flex flex-col gap-1">
+          {data.company_name && (
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-500">Company</span>
+              <span className="text-sm font-semibold">{data.company_name}</span>
+            </div>
+          )}
           <div className="flex justify-between">
             <span className="text-sm text-gray-500">Name</span>
             <span className="text-sm font-semibold">{data.customer_name}</span>

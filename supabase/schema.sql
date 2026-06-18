@@ -7,6 +7,7 @@ create sequence if not exists invoice_number_seq start 1;
 create table if not exists invoices (
   id uuid default gen_random_uuid() primary key,
   invoice_number integer not null unique,
+  company_name text,
   customer_name text not null,
   customer_mobile text not null,
   invoice_date date not null default current_date,

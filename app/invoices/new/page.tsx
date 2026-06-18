@@ -38,6 +38,7 @@ function emptyPrescription() {
 
 function defaultFormData(): InvoiceFormData {
   return {
+    company_name: '',
     customer_name: '',
     customer_mobile: '',
     invoice_date: getTodayString(),
@@ -88,6 +89,7 @@ export default function NewInvoicePage() {
         .from('invoices')
         .insert({
           invoice_number: form.invoice_number,
+          company_name: form.company_name.trim() || null,
           customer_name: form.customer_name.trim(),
           customer_mobile: form.customer_mobile.trim(),
           invoice_date: form.invoice_date,
