@@ -1,71 +1,113 @@
-# Company Name Feature
+# Company Name Feature - Implementation Summary
 
-## Overview
-Added an optional "Company Name" field above the Customer Name throughout the invoice application.
+## ✅ What's Been Done
 
-## Changes Made
+An optional "Company Name" field has been added above the Customer Name field throughout the invoice system.
 
-### 1. Database Schema (`supabase/schema.sql`)
-- Added `company_name text` column to the `invoices` table (nullable/optional)
+### Files Modified
 
-### 2. TypeScript Types (`types/invoice.ts`)
-- Added `company_name?: string` to the `Invoice` interface
-- Added `company_name: string` to the `InvoiceFormData` interface
+1. **Database Schema** (`supabase/schema.sql`)
+   - Added `company_name text` column to `invoices` table
 
-### 3. Customer Form (`components/invoice-form/StepCustomer.tsx`)
-- Added "Company Name" input field at the top (before Customer Name)
-- Field is optional with placeholder text "Enter company name (optional)"
+2. **TypeScript Types** (`types/invoice.ts`)
+   - Added `company_name?: string` to `Invoice` interface
+   - Added `company_name: string` to `InvoiceFormData` interface
 
-### 4. Invoice Preview (`components/InvoicePreview.tsx`)
-- Added company name display in the Customer Details section
-- Shows above customer name in blue color (#1a56c4) when present
-- Only displays if company_name is provided
+3. **Customer Form** (`components/invoice-form/StepCustomer.tsx`)
+   - Added "Company Name" input field (optional)
+   - Positioned above "Customer Name" field
 
-### 5. Review Step (`components/invoice-form/StepReview.tsx`)
-- Added company name display in the customer details review section
-- Shows conditionally when company_name is filled
+4. **Review Step** (`components/invoice-form/StepReview.tsx`)
+   - Displays company name if provided
 
-### 6. New Invoice Page (`app/invoices/new/page.tsx`)
-- Added `company_name: ''` to the default form data
-- Updated the save handler to include company_name in the database insert
+5. **Invoice Preview** (`components/InvoicePreview.tsx`)
+   - Shows company name in blue above customer name in the customer details section
 
-### 7. Invoice List Page (`app/invoices/page.tsx`)
-- Added company name display in the invoice list cards (shown in blue above customer name)
-- Updated search functionality to include company_name in search queries
-- Updated placeholder text to "Search by company, name or mobile..."
+6. **Invoice List** (`app/invoices/page.tsx`)
+   - Displays company name in invoice list items
+   - Search now includes company name
+   - Updated placeholder text
 
-### 8. Database Migration (`supabase/migration_add_company_name.sql`)
-- Created migration script to add the company_name column to existing databases
+7. **New Invoice Page** (`app/invoices/new/page.tsx`)
+   - Initialized `company_name` field in form data
+   - Saves company name to database
 
-## Database Migration
+### Migration Files Created
 
-To apply this change to your Supabase database, run the following SQL:
+1. **`supabase/migration_add_company_name.sql`**
+   - SQL script to add the column to existing database
+
+2. **`MIGRATION_GUIDE.md`**
+   - Step-by-step instructions for running the migration
+
+3. **`run-migration.js`**
+   - Helper script (informational only - requires service_role key)
+
+## 🚀 How to Run the Migration
+
+### Quick Steps (Easiest Method):
+
+1. Open your Supabase Dashboard: https://supabase.com/dashboard
+2. Go to **SQL Editor** (left sidebar)
+3. Click **New Query**
+4. Copy and paste this SQL:
 
 ```sql
 ALTER TABLE invoices ADD COLUMN IF NOT EXISTS company_name text;
 COMMENT ON COLUMN invoices.company_name IS 'Optional company name for business customers';
 ```
 
-Or use the provided migration file: `supabase/migration_add_company_name.sql`
+5. Click **Run**
+6. Done! ✅
 
-## UI Behavior
+See `MIGRATION_GUIDE.md` for alternative methods.
 
-- **Form Entry**: Company name field appears first in the customer details step, but is optional
-- **Validation**: Company name is NOT required - only customer name and mobile are mandatory
-- **Display**: When company name is provided:
-  - Shows in blue color above customer name in the printed invoice
-  - Shows in the review step
-  - Shows in the invoice list
-  - Shows in the invoice detail page
-- **Search**: Can search for invoices by company name in the invoice list
+## 🎨 User Experience
 
-## Testing Checklist
+### Form Flow
+1. User creates a new invoice
+2. First field is "Company Name" (optional, no asterisk)
+3. Second field is "Customer Name *" (required, has asterisk)
+4. User can leave company name blank or fill it in
+5. Company name appears throughout the invoice if provided
 
-- [ ] Create new invoice with company name
-- [ ] Create new invoice without company name
-- [ ] View invoice with company name in list
-- [ ] View invoice without company name in list
-- [ ] Search by company name
-- [ ] Preview invoice with company name
-- [ ] Generate PDF with company name
-- [ ] Share via WhatsApp with company name
+### Display Locations
+- **Invoice Preview**: Blue text above customer name in customer details box
+- **Invoice List**: Small blue text above customer name in list items
+- **Review Step**: Shows company name if provided
+- **PDF/Print**: Company name appears on printed invoices
+
+### Visual Style
+- Company name appears in **blue color** (`#1a56c4`) to distinguish it from customer name
+- Font size: 11px (slightly smaller than customer name)
+- Weight: 700 (bold)
+- Always displayed above customer name when present
+
+## ✅ Testing Checklist
+
+- [x] Build passes without errors
+- [x] TypeScript types are correct
+- [x] No diagnostics/lint errors
+- [ ] Run migration on Supabase
+- [ ] Test creating new invoice with company name
+- [ ] Test creating new invoice without company name
+- [ ] Verify company name appears in invoice preview
+- [ ] Verify company name appears in invoice list
+- [ ] Test search by company name
+- [ ] Verify PDF generation includes company name
+- [ ] Test WhatsApp share includes company name
+
+## 🔄 Backward Compatibility
+
+- ✅ Existing invoices without company name will continue to work
+- ✅ Company name is optional (nullable in database)
+- ✅ All existing functionality remains unchanged
+- ✅ No breaking changes
+
+## 📝 Next Steps
+
+1. **Run the migration** (see instructions above)
+2. **Test the feature** locally with `npm run dev`
+3. **Create a test invoice** with a company name
+4. **Create a test invoice** without a company name (to verify it's truly optional)
+5. **Verify all display locations** show the company name correctly

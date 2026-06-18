@@ -118,8 +118,12 @@ export function InvoicePreview({ invoice, id = 'invoice-print-area' }: Props) {
                 Customer Details
               </div>
               {invoice.company_name && (
-                <div style={{ fontSize: '11px', fontWeight: 700, marginBottom: '1px', color: '#1a56c4' }}>{invoice.company_name}</div>
+                <>
+                  <div style={{ fontSize: '8px', fontWeight: 600, color: '#666', marginBottom: '1px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Company Name</div>
+                  <div style={{ fontSize: '11px', fontWeight: 700, marginBottom: '3px', color: '#1a56c4' }}>{invoice.company_name}</div>
+                </>
               )}
+              <div style={{ fontSize: '8px', fontWeight: 600, color: '#666', marginBottom: '1px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Customer Name</div>
               <div style={{ fontSize: '12px', fontWeight: 700, marginBottom: '2px' }}>{invoice.customer_name}</div>
               <div style={{ fontSize: '10px', color: '#444' }}>Mobile Number : {invoice.customer_mobile}</div>
             </td>
